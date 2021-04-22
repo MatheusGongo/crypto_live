@@ -1,4 +1,4 @@
-defmodule Crypto.Exchanges.Client do
+defmodule CryptoLive.Exchanges.Client do
   use GenServer
   require Logger
 
@@ -83,9 +83,7 @@ defmodule Crypto.Exchanges.Client do
     {:noreply, client}
   end
 
-  def handle_info({:gun_upgrade, conn, _ref, ["websocket"], _headers},
-                  %{conn: conn}=client)
-  do
+  def handle_info({:gun_upgrade, conn, _ref, ["websocket"], _headers}, %{conn: conn}=client) do
     Logger.info("#{inspect(client.module)} ws connected. Subscribing...")
     subscribe(client)
     {:noreply, client}

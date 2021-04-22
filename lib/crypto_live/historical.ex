@@ -1,0 +1,63 @@
+defmodule CryptoLive.Historical do
+  use GenServer
+  alias CryptoLive.{Product, Trade, Exchanges}
+
+  @type t() :: %__MODULE__{
+    products: [Product.t()],
+    trades: %{Product.t() => Trade.t()}
+  }
+  defstruct [:products, :trades]
+
+  @spec get_last_trade(pid() | atom(), Product.t()) :: Trade.t() | nil
+  def get_last_trade(pid\\__MODULE__, product) do
+    GenServer.call(pid, {:get_last_trade, product})
+  end
+
+  @spec get_last_trades(pid() | atom(), [Product.t()]) :: [Trade.t() | nil]
+  def get_last_trades(pid\\__MODULE__, products) do
+    GenServer.call(pid, {:get_last_trades, products})
+  end
+
+  @spec clear(pid() | atom()) :: :ok
+  def clear(pid\\__MODULE__) do
+    GenServer.call(pid, :clear)
+  end
+
+  # :products
+  def start_link(opts) do
+    {products, opts} = Keyword.pop(opts, :products, Exchanges.available_products())
+    GenServer.start_link(__MODULE__, products, opts)
+  end
+
+  def init(products) do
+    historical = %__MODULE__{products: products, trades: %{}}
+    {:ok, historical, {:continue, :subscribe}}
+  end
+
+  def handle_continue(:subscribe, historical) do
+    Enum.each(historical.products, &Exchanges.subscribe/1)
+    {:noreply, historical}
+  end
+
+  def handle_info({:new_trade, trade}, historical) do
+    updated_trades = Map.put(historical.trades, trade.product, trade)
+    updated_historical = %{historical | trades: updated_trades}
+    {:noreply, updated_historical}
+  end
+
+  def handle_call({:get_last_trade, product}, _from, historical) do
+    trade = Map.get(historical.trades, product)
+    {:reply, trade, historical}
+  end
+
+  def handle_call({:get_last_trades, products}, _from, historical) do
+    trades = Enum.map(products, &Map.get(historical.trades, &1))
+    {:reply, trades, historical}
+  end
+
+  def handle_call(:clear, _from, historical) do
+    historical = %{historical | trades: %{}}
+    {:reply, :ok, historical}
+  end
+
+end

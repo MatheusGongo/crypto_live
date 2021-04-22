@@ -16,8 +16,8 @@ defmodule CryptoLiveWeb.Router do
 
   scope "/", CryptoLiveWeb do
     pipe_through :browser
-
-    live "/", PageLive, :index
+    get "/", ProductController, :index
+    # live "/", PageLive, :index
   end
 
   # Other scopes may use custom stacks.

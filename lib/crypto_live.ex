@@ -1,9 +1,10 @@
 defmodule CryptoLive do
-  @moduledoc """
-  CryptoLive keeps the contexts that define your domain
-  and business logic.
+  defdelegate available_products(), to: CryptoLive.Exchanges
 
-  Contexts are also responsible for managing your data, regardless
-  if it comes from the database, an external API or others.
-  """
+  defdelegate subscribe_to_trades(product), to: CryptoLive.Exchanges, as: :subscribe
+
+  defdelegate unsubcribe_from_trades(product), to: CryptoLive.Exchanges, as: :unsubscribe
+
+  defdelegate get_last_trade(product), to: CryptoLive.Historical
+  defdelegate get_last_trades(products), to: CryptoLive.Historical
 end
